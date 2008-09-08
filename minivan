@@ -1,0 +1,177 @@
+#! /usr/bin/perl
+use 5.008;
+use warnings;
+use strict;
+use IPC::Messaging;
+use Getopt::Long;
+
+use vars '$VERSION';
+$VERSION = '0.01_04';
+
+my $DEF_PORT = 6826;
+
+GetOptions(
+	"port|p=i"  => \my $port,
+	"bind|b=s"  => \my $bind,
+	"verbose|v" => \my $verbose,
+) or usage();
+
+my %sub;
+my %sock;
+
+run();
+
+sub run
+{
+	my $van = IPC::Messaging->tcp_server($port || $DEF_PORT, bind => $bind, by_line => 1);
+	receive_loop {
+		got tcp_connect => then {
+		};
+		got tcp_line => then {
+			my ($msg, $d, $sock) = @_;
+			my $k = "$d->{from}:$d->{from_port}";
+			process_req($sock, $k, $d->{line});
+		};
+		got tcp_disconnect => then {
+			my ($msg, $d, $sock) = @_;
+			my $k = "$d->{from}:$d->{from_port}";
+			destroy($sock, $k);
+		};
+	};
+}
+
+sub process_req
+{
+	my ($sock, $k, $s) = @_;
+	$s =~ s/\r?\n?$//;
+	print STDERR "$k: got ($s)\n" if $verbose;
+	if ($s =~ /^quit\b/) {
+		destroy($sock, $k);
+	} elsif ($s =~ /^put\s+(\S+)\s+(.*)$/) {
+		store($sock, $k, $1, $2);
+	} elsif ($s =~ /^subscribe\s+(\S+)$/) {
+		$sock{$k} = $sock;
+		$sub{$1} ||= [];
+		if (grep { $_ eq $k } @{$sub{$1}}) {
+			syswrite $sock, "ok\n";
+		} else {
+			push @{$sub{$1}}, $k;
+			syswrite $sock, "ok\n";
+		}
+	} else {
+		syswrite $sock, "esyntax\n";
+	}
+}
+
+sub destroy
+{
+	my ($sock, $k) = @_;
+	delete $sock{$k};
+	close $sock if $sock;
+}
+
+sub store
+{
+	my ($sock, $k, $chan, $data) = @_;
+	my $sub = $sub{$chan} || [];
+	my @sub;
+	syswrite $sock, "ok\n";
+	for my $to (@$sub) {
+		next unless $sock{$to};
+		push @sub, $to;
+		syswrite $sock{$to}, "msg $chan $data\n";
+	}
+	$sub{$chan} = \@sub;
+}
+
+sub usage
+{
+	print STDERR <<EOF;
+Usage:
+	$0 options
+
+Options:
+	--port=listen_port or -p listen_port
+		The default is $DEF_PORT.
+
+	--bind=address or -b address
+		The default is bind to all.
+
+	--verbose or -v
+EOF
+	exit 1;
+}
+
+__END__
+
+=head1 NAME
+
+minivan - a minimalistic message bus server
+
+=head1 VERSION
+
+This document describes minivan version 0.01_04
+
+=head1 SYNOPSIS
+
+	minivan [options]
+
+    Options:
+	   --port=listen_port or -p listen_port
+		   The default is $DEF_PORT.
+
+	   --bind=address or -b address
+		   The default is bind to all.
+
+	   --verbose or -v
+
+=head1 DESCRIPTION
+
+The B<minivan> program is a server for IPC::Message::Minivan.
+
+=head1 DEPENDENCIES
+
+Perl 5.8.4 or above, IPC::Messaging.
+
+=head1 INCOMPATIBILITIES
+
+This program, in all likelihood, will only work on Unix-like operating systems.
+
+=head1 BUGS AND LIMITATIONS
+
+Due to the current state of the IPC::Messaging module,
+if a particular subscriber never calls get() and never
+exits, the minivan daemon will eventually become clogged
+and will stop delivering messages.  This should be fixed
+in IPC::Messaging.
+
+=head1 AUTHOR
+
+Anton Berezin  C<< <tobez@tobez.org> >>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2008, Anton Berezin C<< <tobez@tobez.org> >>. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.

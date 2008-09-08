@@ -1,0 +1,26 @@
+---
+abstract: 'a minimalistic message bus'
+author:
+  - 'Anton Berezin  C<< <tobez@tobez.org> >>'
+build_requires:
+  Test::More: 0
+distribution_type: module
+generated_by: 'Module::Install version 0.77'
+license: bsd
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: IPC-Message-Minivan
+no_index:
+  directory:
+    - devel
+    - inc
+    - t
+recommends:
+  IO::KQueue: 0
+requires:
+  IPC::Messaging: 0.01_11
+  JSON::XS: 2.1
+  Time::HiRes: 0
+  perl: 5.8.0
+version: 0.01_04
