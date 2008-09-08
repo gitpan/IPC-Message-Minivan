@@ -16,6 +16,7 @@ recommends      'IO::KQueue'       => 0;
 build_requires  'Test::More'       => 0;
 
 no_index        'directory'        => 'devel';
+install_script  'minivan';
 
 if ( $^O eq 'MSWin32' ) {
 	die "This distribution would not work on Windows platform.\n";

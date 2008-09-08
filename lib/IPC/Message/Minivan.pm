@@ -7,7 +7,7 @@ use JSON::XS;
 use Time::HiRes;
 
 use vars '$VERSION';
-$VERSION = '0.01_04';
+$VERSION = '0.01_05';
 
 my $DEF_PORT = 6826;
 
@@ -159,7 +159,7 @@ IPC::Message::Minivan - a minimalistic message bus
 
 =head1 VERSION
 
-This document describes IPC::Message::Minivan version 0.01_04
+This document describes IPC::Message::Minivan version 0.01_05
 
 =head1 SYNOPSIS
 

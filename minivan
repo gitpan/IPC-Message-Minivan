@@ -6,7 +6,7 @@ use IPC::Messaging;
 use Getopt::Long;
 
 use vars '$VERSION';
-$VERSION = '0.01_04';
+$VERSION = '0.01_05';
 
 my $DEF_PORT = 6826;
 
@@ -110,7 +110,7 @@ minivan - a minimalistic message bus server
 
 =head1 VERSION
 
-This document describes minivan version 0.01_04
+This document describes minivan version 0.01_05
 
 =head1 SYNOPSIS
 
