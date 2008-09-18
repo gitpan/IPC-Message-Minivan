@@ -7,7 +7,7 @@ use JSON::XS;
 use Time::HiRes;
 
 use vars '$VERSION';
-$VERSION = '0.01_05';
+$VERSION = '0.01_06';
 
 my $DEF_PORT = 6826;
 
@@ -159,7 +159,7 @@ IPC::Message::Minivan - a minimalistic message bus
 
 =head1 VERSION
 
-This document describes IPC::Message::Minivan version 0.01_05
+This document describes IPC::Message::Minivan version 0.01_06
 
 =head1 SYNOPSIS
 
@@ -171,6 +171,12 @@ This document describes IPC::Message::Minivan version 0.01_05
 	# can be an arbitrary Perl data structure,
 	# which should not be too big.
 	$van->msg("chan1", $msg);
+
+	# Subscribe to a channel "chan1".
+	$van->subscribe("chan1");
+
+	# Subscribe to two channels, "chan2" and "chan3"
+	$van->subscribe("chan2", "chan3");
 
 	# Get all pending messages from all subscribed channels,
 	# no way to find out what the channel was for an
@@ -207,7 +213,7 @@ to a minimalistic message bus.
 There is no store-and-forward, there is no authentication,
 there are no guarantees about delivery.  You've been warned.
 
-Synopsis above more or less covers it all.
+The synopsis section above more or less covers it all.
 
 =head1 DEPENDENCIES
 
