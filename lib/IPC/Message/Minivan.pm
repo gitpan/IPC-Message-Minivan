@@ -7,7 +7,7 @@ use JSON::XS;
 use Time::HiRes;
 
 use vars '$VERSION';
-$VERSION = '0.01_06';
+$VERSION = '0.01_07';
 
 my $DEF_PORT = 6826;
 
@@ -53,22 +53,41 @@ sub msg
 sub get
 {
 	my ($me, @chan) = @_;
-	$me->_poll;
+
 	my $classify = 0;
 	my $want_one = !wantarray;
+	my $timeout = 0;
+	if (@chan && $chan[0] =~ /^\d+$/) {
+		$timeout = shift @chan;
+	}
 	if (@chan == 1 && ref $chan[0]) {
 		@chan = @{$chan[0]};
 		$classify = 1;
 	}
+
+	my @r = $me->_scan(want_one => $want_one, classify => $classify, chan => \@chan);
+	if (@r) {
+		return @r unless $want_one;
+		return $r[0] if defined $r[0];
+	}
+
+	$me->_poll($timeout);
+	return $me->_scan(want_one => $want_one, classify => $classify, chan => \@chan);
+}
+
+sub _scan
+{
+	my ($me, %p) = @_;
+
 	my (@r, $r, $v, $found);
-	unless (@chan) {
+	unless (@{$p{chan}}) {
 		my @m = @{$me->{queue}};
 		$me->{queue} = [];
 		for my $m (@m) {
 			if (!$found) {
 				$v = $me->{json}->decode($m->[1]);
-				$v = [$m->[0], $v] if $classify;
-				if ($want_one) {
+				$v = [$m->[0], $v] if $p{classify};
+				if ($p{want_one}) {
 					$r = $v;
 					$found = 1;
 				} else {
@@ -79,14 +98,14 @@ sub get
 			}
 		}
 	} else {
-		my %c = map { $_ => 1 } @chan;
+		my %c = map { $_ => 1 } @{$p{chan}};
 		my @m = @{$me->{queue}};
 		$me->{queue} = [];
 		for my $m (@m) {
 			if ($c{$m->[0]} && !$found) {
 				$v = $me->{json}->decode($m->[1]);
-				$v = [$m->[0], $v] if $classify;
-				if ($want_one) {
+				$v = [$m->[0], $v] if $p{classify};
+				if ($p{want_one}) {
 					$r = $v;
 					$found = 1;
 				} else {
@@ -97,7 +116,7 @@ sub get
 			}
 		}
 	}
-	$want_one ? $r : @r;
+	return $p{want_one} ? ($r) : @r;
 }
 
 sub _poll
@@ -134,7 +153,7 @@ sub _poll
 			};
 			after $to => then { $timeout = 1; };
 		};
-		$to = 0;
+		$to = 0;  # XXX tricky, this
 		return if $timeout;
 		return unless $me->{sock};
 	}
@@ -159,7 +178,7 @@ IPC::Message::Minivan - a minimalistic message bus
 
 =head1 VERSION
 
-This document describes IPC::Message::Minivan version 0.01_06
+This document describes IPC::Message::Minivan version 0.01_07
 
 =head1 SYNOPSIS
 
@@ -180,30 +199,58 @@ This document describes IPC::Message::Minivan version 0.01_06
 
 	# Get all pending messages from all subscribed channels,
 	# no way to find out what the channel was for an
-	# individual message
+	# individual message, no waiting.
 	my @m = $van->get;
+
+	# Get all pending messages from all subscribed channels,
+	# no way to find out what the channel was for an
+	# individual message, wait up to 5 seconds for messages
+	# to arrive.
+	my @m = $van->get(5);
 
 	# Get all pending messages from specified channels,
 	# no way to find out what the channel was for an
-	# individual message
+	# individual message, no waiting.
 	my @m = $van->get("chan1", "chan2");
+
+	# Get all pending messages from specified channels,
+	# no way to find out what the channel was for an
+	# individual message, wait up to 5 seconds for messages
+	# to arrive.
+	my @m = $van->get(5, "chan1", "chan2");
 
 	# Get all pending messages from all subscribed channels.
 	# Returns a list of arrayrefs, first element in each is the
-	# channel name, second is the message.
+	# channel name, second is the message.  No waiting.
 	my @m = $van->get([]);
 
 	# Get all pending messages from all subscribed channels.
 	# Returns a list of arrayrefs, first element in each is the
-	# channel name, second is the message.
+	# channel name, second is the message.  Wait up to 5
+	# seconds for messages to arrive.
+	my @m = $van->get(5, []);
+
+	# Get all pending messages from all subscribed channels.
+	# Returns a list of arrayrefs, first element in each is the
+	# channel name, second is the message.  No waiting.
 	my @m = $van->get(["chan1", "chan2"]);
+
+	# Get all pending messages from all subscribed channels.
+	# Returns a list of arrayrefs, first element in each is the
+	# channel name, second is the message.  Wait up to 5
+	# seconds for messages to arrive.
+	my @m = $van->get(5, ["chan1", "chan2"]);
 
 	# Get only the first pending message.  The variations above
 	# apply, so:
 	my $m = $van->get;
+	my $m = $van->get(5);
 	my $m = $van->get("chan1", "chan2");
+	my $m = $van->get(5, "chan1", "chan2");
 	my $m = $van->get([]);
+	my $m = $van->get(5, []);
 	my $m = $van->get(["chan1", "chan2"]);
+	my $m = $van->get(5, ["chan1", "chan2"]);
 
 =head1 DESCRIPTION
 
@@ -237,7 +284,7 @@ Anton Berezin  C<< <tobez@tobez.org> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2008, Anton Berezin C<< <tobez@tobez.org> >>. All rights reserved.
+Copyright (c) 2008, 2009, Anton Berezin C<< <tobez@tobez.org> >>. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions

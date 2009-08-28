@@ -1,5 +1,8 @@
 Revision history for IPC::Message::Minivan.
 
+0.01_07 Fri Aug 28 16:07:23 CEST 2009
+       Understand timeout parameter.
+
 0.01_06 Thu Sep 18 13:50:44 CEST 2008
        Document $van->subscribe
 

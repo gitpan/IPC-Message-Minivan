@@ -3,9 +3,12 @@ abstract: 'a minimalistic message bus'
 author:
   - 'Anton Berezin  C<< <tobez@tobez.org> >>'
 build_requires:
+  ExtUtils::MakeMaker: 6.42
   Test::More: 0
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: 'Module::Install version 0.77'
+generated_by: 'Module::Install version 0.91'
 license: bsd
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -23,4 +26,6 @@ requires:
   JSON::XS: 2.1
   Time::HiRes: 0
   perl: 5.8.0
-version: 0.01_06
+resources:
+  license: http://opensource.org/licenses/bsd-license.php
+version: 0.01_07
