@@ -10,6 +10,7 @@ license         'bsd';
 requires        'IPC::Messaging'   => '0.01_11';
 requires        'JSON::XS' => 2.1;
 requires        'Time::HiRes'      => 0;
+requires        'Regexp::Common'   => 0;
 
 recommends      'IO::KQueue'       => 0;
 

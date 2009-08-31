@@ -5,9 +5,10 @@ use 5.008;
 use IPC::Messaging;
 use JSON::XS;
 use Time::HiRes;
+use Regexp::Common;
 
 use vars '$VERSION';
-$VERSION = '0.01_07';
+$VERSION = '0.01_08';
 
 my $DEF_PORT = 6826;
 
@@ -57,7 +58,7 @@ sub get
 	my $classify = 0;
 	my $want_one = !wantarray;
 	my $timeout = 0;
-	if (@chan && $chan[0] =~ /^\d+$/) {
+	if (@chan && $chan[0] =~ /^$RE{num}{real}$/ && $chan[0] >= 0) {
 		$timeout = shift @chan;
 	}
 	if (@chan == 1 && ref $chan[0]) {
@@ -178,7 +179,7 @@ IPC::Message::Minivan - a minimalistic message bus
 
 =head1 VERSION
 
-This document describes IPC::Message::Minivan version 0.01_07
+This document describes IPC::Message::Minivan version 0.01_08
 
 =head1 SYNOPSIS
 
